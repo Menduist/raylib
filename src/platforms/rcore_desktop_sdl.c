@@ -79,10 +79,6 @@
 //----------------------------------------------------------------------------------
 // Defines and Macros
 //----------------------------------------------------------------------------------
-#ifndef MAX_CLIPBOARD_BUFFER_LENGTH
-    #define MAX_CLIPBOARD_BUFFER_LENGTH 1024 // Size of the clipboard buffer used on GetClipboardText()
-#endif
-
 #if ((defined(SDL_MAJOR_VERSION) && (SDL_MAJOR_VERSION == 3)) && (defined(SDL_MINOR_VERSION) && (SDL_MINOR_VERSION >= 1)))
     #ifndef USING_VERSION_SDL3
         #define USING_VERSION_SDL3
@@ -1140,20 +1136,15 @@ void SetClipboardText(const char *text)
 // Get clipboard text content
 const char *GetClipboardText(void)
 {
-    static char buffer[MAX_CLIPBOARD_BUFFER_LENGTH] = { 0 };
+    static char *clipboard = 0;
 
-    char *clipboard = SDL_GetClipboardText();
-
-    int clipboardSize = snprintf(buffer, MAX_CLIPBOARD_BUFFER_LENGTH, "%s", clipboard);
-    if (clipboardSize >= MAX_CLIPBOARD_BUFFER_LENGTH)
-    {
-        char *truncate = buffer + MAX_CLIPBOARD_BUFFER_LENGTH - 4;
-        sprintf(truncate, "...");
+    if (clipboard) {
+        SDL_free(clipboard);
+        clipboard = 0;
     }
+    clipboard = SDL_GetClipboardText();
 
-    SDL_free(clipboard);
-
-    return buffer;
+    return clipboard;
 }
 
 // Get clipboard image
@@ -2035,6 +2026,8 @@ int InitPlatform(void)
             SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
         }
     }
+
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
     // Init window
 #if defined(USING_VERSION_SDL3)
